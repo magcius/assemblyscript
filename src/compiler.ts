@@ -328,7 +328,7 @@ export class Compiler extends DiagnosticEmitter {
     // set up static memory segments and the heap base pointer
     if (!options.noMemory) {
       let memoryOffset = this.memoryOffset;
-      memoryOffset = i64_align(memoryOffset, options.usizeType.byteSize);
+      memoryOffset = i64_eq(memoryOffset, i64_zero) ? i64_zero : i64_align(memoryOffset, options.usizeType.byteSize);
       this.memoryOffset = memoryOffset;
       if (options.isWasm64) {
         module.addGlobal(
