@@ -345,6 +345,7 @@ export class Compiler extends DiagnosticEmitter {
           module.createI32(i64_low(memoryOffset))
         );
       }
+      module.addGlobalExport("HEAP_BASE", "HEAP_BASE");
 
       // determine initial page size
       let pages = i64_shr_u(i64_align(memoryOffset, 0x10000), i64_new(16, 0));
