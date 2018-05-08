@@ -1492,6 +1492,7 @@ export function compileCall(
         ConversionKind.IMPLICIT,
         WrapMode.NONE
       );
+      const fullOffset = addMemoryOffset(compiler, arg0);
       let offset = operands.length == 2 ? evaluateConstantOffset(compiler, operands[1]) : 0; // reports
       if (offset < 0) { // reported in evaluateConstantOffset
         return module.createUnreachable();
@@ -1500,7 +1501,7 @@ export function compileCall(
       return module.createLoad(
         typeArguments[0].byteSize,
         typeArguments[0].is(TypeFlags.SIGNED | TypeFlags.INTEGER),
-        arg0,
+        fullOffset,
         typeArguments[0].is(TypeFlags.INTEGER) &&
         contextualType.is(TypeFlags.INTEGER) &&
         contextualType.size > typeArguments[0].size
@@ -1544,6 +1545,7 @@ export function compileCall(
         ConversionKind.IMPLICIT,
         WrapMode.NONE
       );
+      const fullOffset = addMemoryOffset(compiler, arg0);
       arg1 = compiler.compileExpression(
         operands[1],
         typeArguments[0],
@@ -1576,7 +1578,7 @@ export function compileCall(
         return module.createUnreachable();
       }
       compiler.currentType = Type.void;
-      return module.createStore(typeArguments[0].byteSize, arg0, arg1, type.toNativeType(), offset);
+      return module.createStore(typeArguments[0].byteSize, fullOffset, arg1, type.toNativeType(), offset);
     }
     case "sizeof": { // sizeof<T!>() -> usize
       compiler.currentType = compiler.options.usizeType;
@@ -2791,4 +2793,19 @@ export function compileAbort(
     ),
     module.createUnreachable()
   ]);
+}
+
+/** Adds the compiler's memoryOffset to the expression. */
+function addMemoryOffset(
+  compiler: Compiler,
+  loadOffset: ExpressionRef,
+): ExpressionRef {
+  var module = compiler.module;
+  var memoryOffset = module.createGetGlobal("HEAP_BASE", compiler.options.usizeType.toNativeType());
+
+  return module.createBinary(
+    compiler.options.isWasm64 ? BinaryOp.AddI64 : BinaryOp.AddI32,
+    loadOffset,
+    memoryOffset,
+  );
 }
